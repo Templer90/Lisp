@@ -39,7 +39,8 @@ namespace buildins {
                 "Function 'tail' passed {}.");
 
         parser::Lval *v = a->lval_take(0);
-        delete (v->lval_pop(0));
+        parser::Lval *p= v->lval_pop(0);
+        delete (p);
         return v;
     }
 
@@ -114,12 +115,12 @@ namespace buildins {
         if (func->compare("join") == 0) { return builtin_join(a); }
         if (func->compare("eval") == 0) { return builtin_eval(a); }
 
-        if (func->compare("+") == 0) { return builtin_op(a, func);}
-        if (func->compare("-") == 0) { return builtin_op(a, func);}
-        if (func->compare("/") == 0) { return builtin_op(a, func);}
-        if (func->compare("*") == 0) { return builtin_op(a, func);}
-        delete(a);
-        return  parser::Lval::Lval_Error("Unknown Function!");
+        if (func->compare("+") == 0) { return builtin_op(a, func); }
+        if (func->compare("-") == 0) { return builtin_op(a, func); }
+        if (func->compare("/") == 0) { return builtin_op(a, func); }
+        if (func->compare("*") == 0) { return builtin_op(a, func); }
+        delete (a);
+        return parser::Lval::Lval_Error("Unknown Function!");
     }
 }
 #endif //LISP_BUILDINS_H

@@ -1,3 +1,5 @@
+#include <fstream>
+#include <sstream>
 #include "crossline.h"
 #include "includes/mpc/mpc.h"
 #include "src/parser/Lval.h"
@@ -41,6 +43,33 @@ parser::Lval *lval_read(mpc_ast_t *t) {
     return x;
 }
 
+void testing( const std::string& file,mpc_parser_t *Lispy){
+    puts("testing started\n");
+
+    std::ifstream testfile(file);
+    std::string line;
+    std::string expectedResult;
+    while(getline(testfile, line))
+    {
+        if(line.empty())continue;
+        getline(testfile, expectedResult);
+        mpc_result_t r;
+        if (mpc_parse("<stdin>", line.c_str(), Lispy, &r)) {
+            parser::Lval *result = lval_read((mpc_ast_t *) r.output)->eval();
+            auto actual=result->lval_print();
+            if(expectedResult!=result->lval_print()){
+                mpc_ast_print((mpc_ast_t *)r.output);
+                printf("'%s' is different '%s' <> '%s'",line.c_str(),actual.c_str(), expectedResult.c_str() );
+                puts("\n");
+            }
+            mpc_ast_delete((mpc_ast_t *) r.output);
+        } else {
+            mpc_err_print(r.error);
+            mpc_err_delete(r.error);
+        }
+    }
+};
+
 int main() {
     /* Create Some Parsers */
     mpc_parser_t *Number = mpc_new("number");
@@ -68,28 +97,15 @@ int main() {
     crossline_completion_register(completion_hook);
     crossline_history_load("history.txt");
 
-
-    /*std::string s="+ 10 10";
-    mpc_result_t r;
-    if (mpc_parse("<stdin>", s.c_str(), Lispy, &r)) {
-
-        mpc_ast_print((mpc_ast_t *) r.output);
-
-        parser::Lval *result = lval_read((mpc_ast_t *) r.output)->eval();
-        result->lval_println();
-        mpc_ast_delete((mpc_ast_t *) r.output);
-    } else {
-        mpc_err_print(r.error);
-        mpc_err_delete(r.error);
-    }*/
-
+    testing("./tests/test.test",Lispy);
 
     while (nullptr != crossline_readline("Lisp> ", buf, sizeof(buf))) {
-        //printf("Read line: \"%s\"\n", buf);
 
         /* Attempt to parse the user input */
         mpc_result_t r;
         if (mpc_parse("<stdin>", buf, Lispy, &r)) {
+            mpc_ast_print((mpc_ast_t *)r.output);
+
             parser::Lval *result = lval_read((mpc_ast_t *) r.output)->eval();
             result->lval_println();
             mpc_ast_delete((mpc_ast_t *) r.output);

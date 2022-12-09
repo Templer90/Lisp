@@ -11,7 +11,6 @@ namespace parser {
             case LVAL_NUM:
                 break;
             case LVAL_ERR:
-                free(this->err);
                 break;
             case LVAL_SYM:
                 break;
@@ -23,6 +22,8 @@ namespace parser {
                     delete (this->cell[i]);
                 }
                 this->cell.clear();
+                break;
+            case LVAL_NONE:
                 break;
         }
         //implied delete(this);
@@ -40,6 +41,15 @@ namespace parser {
         return x;
     }
 
+    Lval *Lval::lval_take(int i) {
+        Lval *x = this->lval_pop(i);
+        for (int j = i + 1; j < this->count; j++) {
+            delete (this->cell[j]);
+        }
+        this->count = 0;
+        return x;
+    }
+
     Lval *Lval::lval_join(Lval *x, Lval *y) {
         while (y->count) {
             x->lval_add(y->lval_pop(0));
@@ -49,50 +59,38 @@ namespace parser {
         return x;
     }
 
-    Lval *Lval::lval_take(int i) {
-        Lval *x = this->lval_pop(i);
-        delete this;
-        return x;
-    }
-
-    void Lval::lval_expr_print(char open, char close) {
-        putchar(open);
+    std::string Lval::lval_expr_print(char open, char close) {
+        std::string str(1, open);
         for (int i = 0; i < this->count; i++) {
-
-            this->cell[i]->lval_print();
-
+            str += this->cell[i]->lval_print();
             if (i != (this->count - 1)) {
-                putchar(' ');
+                str += ' ';
             }
         }
-        putchar(close);
+        str += close;
+        return str;
     }
 
-    void Lval::lval_print() {
+    std::string Lval::lval_print() {
         switch (this->type) {
             case LVAL_NUM:
-                printf("%li", this->num);
-                break;
+                return std::to_string(this->num);
             case LVAL_ERR:
-                printf("Error: %s", this->err->c_str());
-                break;
+                return "Error: " + this->err;
             case LVAL_SYM:
-                printf("%s", this->sym.c_str());
-                break;
+                return this->sym;
             case LVAL_SEXPR:
-                this->lval_expr_print('(', ')');
-                break;
+                return this->lval_expr_print('(', ')');
             case LVAL_QEXPR:
-                this->lval_expr_print('{', '}');
-                break;
+                return this->lval_expr_print('{', '}');
             default:
-                printf("%s", "Error in Printing?");
-                break;
+                return "Error in Printing?";
         }
     }
 
     void Lval::lval_println(Lval *v) {
-        v->lval_print();
+        auto s = v->lval_print();
+        puts(s.c_str());
         putchar('\n');
     }
 
@@ -100,7 +98,7 @@ namespace parser {
         Lval::lval_println(this);
     }
 
-    Lval* Lval::eval() {
+    Lval *Lval::eval() {
         if (this->type == LVAL_SEXPR) {
             return this->eval_sexpr();
         } else {
@@ -108,30 +106,32 @@ namespace parser {
         }
     }
 
-    Lval* Lval::eval_sexpr() {
-        std::vector<Lval*> list ;
+    Lval *Lval::eval_sexpr() {
+        std::vector<Lval *> list;
         for (int i = 0; i < this->count; i++) {
-            list.push_back( this->cell[i]->eval());
+            list.push_back(this->cell[i]->eval());
         }
 
         for (int i = 0; i < list.size(); i++) {
             if (list[i]->type == LVAL_ERR) { return this->lval_take(i); }
+            if (list[i]->type == LVAL_NONE) { return Lval_Error("NONE Type Generated"); }
         }
 
         if (this->count == 0) { return this; }
 
-        if (this->count == 1) { return this->lval_take( 0); }
+        if (this->count == 1) { return this->lval_take(0); }
 
-        Lval *f = this->lval_pop( 0);
+        Lval *f = this->lval_pop(0);
         if (f->type != LVAL_SYM) {
-            delete(f);
-            delete(this);
+            delete (f);
+            delete (this);
             return parser::Lval::Lval_Error("S-expression Does not start with symbol.");
         }
 
         /* Call builtin with operator */
-        Lval *result = buildins::builtin(this, &f->sym);
-        delete(f);
+        auto symbol=f->sym;
+        Lval *result = buildins::builtin(this, &symbol);
+        delete (f);
         return result;
     }
 
