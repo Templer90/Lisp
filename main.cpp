@@ -97,7 +97,7 @@ int main() {
     crossline_completion_register(completion_hook);
     crossline_history_load("history.txt");
 
-    testing("./tests/test.test",Lispy);
+    testing("./tests/full.test",Lispy);
 
     while (nullptr != crossline_readline("Lisp> ", buf, sizeof(buf))) {
 

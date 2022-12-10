@@ -9,12 +9,9 @@ namespace parser {
     Lval::~Lval() {
         switch (this->type) {
             case LVAL_NUM:
-                break;
             case LVAL_ERR:
-                break;
             case LVAL_SYM:
                 break;
-
                 /* If Qexpr or Sexpr then delete all elements inside */
             case LVAL_QEXPR:
             case LVAL_SEXPR:
@@ -34,6 +31,13 @@ namespace parser {
         this->cell.push_back(x);
     }
 
+    Lval *Lval::lval_pop() {
+        return this->lval_pop(0);
+    }
+    Lval *Lval::lval_take() {
+        return this->lval_take(0);
+    }
+
     Lval *Lval::lval_pop(int i) {
         Lval *x = this->cell[i];
         this->cell.erase(this->cell.begin() + i);
@@ -43,16 +47,17 @@ namespace parser {
 
     Lval *Lval::lval_take(int i) {
         Lval *x = this->lval_pop(i);
-        for (int j = i + 1; j < this->count; j++) {
+        for (int j = 0; j < this->count; j++) {
             delete (this->cell[j]);
         }
+        this->cell.clear();
         this->count = 0;
         return x;
     }
 
     Lval *Lval::lval_join(Lval *x, Lval *y) {
         while (y->count) {
-            x->lval_add(y->lval_pop(0));
+            x->lval_add(y->lval_pop());
         }
 
         delete (y);
@@ -117,11 +122,12 @@ namespace parser {
             if (list[i]->type == LVAL_NONE) { return Lval_Error("NONE Type Generated"); }
         }
 
+        this->cell=list;
         if (this->count == 0) { return this; }
 
-        if (this->count == 1) { return this->lval_take(0); }
+        if (this->count == 1) { return this->lval_take(); }
 
-        Lval *f = this->lval_pop(0);
+        Lval *f = this->lval_pop();
         if (f->type != LVAL_SYM) {
             delete (f);
             delete (this);
