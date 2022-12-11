@@ -10,11 +10,16 @@
 #include <vector>
 #include <list>
 #include <queue>
+#include "../environment/ValueHolder.h"
 
 namespace parser {
+    class ValueHolder;
     enum LvalTypes {
-        LVAL_NONE, LVAL_ERR, LVAL_NUM, LVAL_SYM, LVAL_SEXPR, LVAL_QEXPR
+        LVAL_NONE,LVAL_FUN,LVAL_ERR, LVAL_NUM, LVAL_SYM, LVAL_SEXPR, LVAL_QEXPR
     };
+
+    class Lval;
+    typedef Lval*(*lbuiltin)(ValueHolder*, Lval*);
 
     class Lval {
     private:
@@ -24,21 +29,26 @@ namespace parser {
         long num{};
         std::string err{};
         std::string sym{};
-        int count{};
+        lbuiltin fun;
+
         //TODO: Replace with Queue
+        int count{};
         std::vector<Lval *> cell;
 
         explicit Lval(LvalTypes t) {
             this->type = t;
             this->count = 0;
             this->cell.clear();
+            this->fun=[](ValueHolder*, Lval*){
+                return Lval_Error("first element is not a function");
+            };
         }
 
         ~Lval();
 
-        Lval *eval();
+        Lval *eval(ValueHolder *env);
 
-        Lval *eval_sexpr();
+        Lval *eval_sexpr(ValueHolder *env);
 
         void lval_add(Lval *x);
 
@@ -58,6 +68,7 @@ namespace parser {
 
         void lval_println();
 
+        Lval* copy();
 
         static void lval_println(Lval *v);
 
@@ -86,6 +97,13 @@ namespace parser {
 
         static Lval *Lval_qexpr() {
             Lval *v = new Lval(LVAL_QEXPR);
+            return v;
+        }
+
+        static Lval *Lval_fun(std::string m, lbuiltin func) {
+            Lval *v = new Lval(LVAL_FUN);
+            v->sym = std::move(m);
+            v->fun = func;
             return v;
         }
 

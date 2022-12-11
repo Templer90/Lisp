@@ -1,8 +1,11 @@
 #include <fstream>
 #include <sstream>
 #include "crossline.h"
+#include "src/environment/ValueHolder.h"
 #include "includes/mpc/mpc.h"
 #include "src/parser/Lval.h"
+#include "src/buildins/buildins.h"
+
 
 static void completion_hook(char const *buf, crossline_completions_t *pCompletion) {
     int i;
@@ -43,7 +46,7 @@ parser::Lval *lval_read(mpc_ast_t *t) {
     return x;
 }
 
-void testing( const std::string& file,mpc_parser_t *Lispy){
+void testing( const std::string& file,mpc_parser_t *Lispy, parser::ValueHolder *env){
     puts("testing started\n");
 
     std::ifstream testfile(file);
@@ -55,7 +58,7 @@ void testing( const std::string& file,mpc_parser_t *Lispy){
         getline(testfile, expectedResult);
         mpc_result_t r;
         if (mpc_parse("<stdin>", line.c_str(), Lispy, &r)) {
-            parser::Lval *result = lval_read((mpc_ast_t *) r.output)->eval();
+            parser::Lval *result = lval_read((mpc_ast_t *) r.output)->eval(env);
             auto actual=result->lval_print();
             if(expectedResult!=result->lval_print()){
                 mpc_ast_print((mpc_ast_t *)r.output);
@@ -71,7 +74,9 @@ void testing( const std::string& file,mpc_parser_t *Lispy){
 };
 
 int main() {
-    /* Create Some Parsers */
+    parser::ValueHolder env;
+    buildins::InitializeBuildins(&env);
+
     mpc_parser_t *Number = mpc_new("number");
     mpc_parser_t *Symbol = mpc_new("symbol");
     mpc_parser_t *Sexpr = mpc_new("sexpr");
@@ -80,14 +85,13 @@ int main() {
     mpc_parser_t *Lispy = mpc_new("lispy");
 
     mpca_lang(MPCA_LANG_DEFAULT,
-              " number : /-?[0-9]+/ ;                              "
-              " symbol : \"list\" | \"head\" | \"tail\" | \"eval\" "
-              "        | \"join\" | '+' | '-' | '*' | '/' ;        "
-              " sexpr  : '(' <expr>* ')' ;                         "
-              " qexpr  : '{' <expr>* '}' ;                         "
-              " expr   : <number> | <symbol> | <sexpr> | <qexpr> ; "
-              " lispy  : /^/ <expr>* /$/ ;                         ",
-              Number, Symbol, Sexpr, Qexpr, Expr, Lispy);
+      "number : /-?[0-9]+/ ;                               "
+      "symbol : /[a-zA-Z0-9_+\\-*\\/\\\\=<>!&]+/ ;         "
+      "sexpr  : '(' <expr>* ')' ;                          "
+      "qexpr  : '{' <expr>* '}' ;                          "
+      "expr   : <number> | <symbol> | <sexpr> | <qexpr> ;  "
+      "lispy  : /^/ <expr>* /$/ ;                          "
+      ,Number, Symbol, Sexpr, Qexpr, Expr, Lispy);
 
     puts("Lispy Version 0.0.0.0.2");
     puts("Press Ctrl+c to Exit\n");
@@ -97,16 +101,16 @@ int main() {
     crossline_completion_register(completion_hook);
     crossline_history_load("history.txt");
 
-    testing("./tests/full.test",Lispy);
+    testing("./tests/full.test",Lispy,&env);
 
     while (nullptr != crossline_readline("Lisp> ", buf, sizeof(buf))) {
 
         /* Attempt to parse the user input */
         mpc_result_t r;
         if (mpc_parse("<stdin>", buf, Lispy, &r)) {
-            mpc_ast_print((mpc_ast_t *)r.output);
+            //mpc_ast_print((mpc_ast_t *)r.output);
 
-            parser::Lval *result = lval_read((mpc_ast_t *) r.output)->eval();
+            parser::Lval *result = lval_read((mpc_ast_t *) r.output)->eval(&env);
             result->lval_println();
             mpc_ast_delete((mpc_ast_t *) r.output);
         } else {
