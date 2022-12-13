@@ -299,4 +299,54 @@ namespace parser {
         v->body = body->copy();
         return v;
     }
+
+    bool Lval::equal(Lval *other) {
+        /* Different Types are always unequal */
+        if (this->type != other->type) { return false; }
+
+        /* Compare Based upon type */
+        switch (this->type) {
+            /* Compare Number Value */
+            case LVAL_NUM: return (this->num == other->num);
+
+                /* Compare String Values */
+            case LVAL_ERR: return this->err.compare(other->err)==0;
+            case LVAL_SYM: return this->sym.compare(other->sym)==0;
+
+                /* If builtin compare, otherwise compare formals and body */
+            case LVAL_FUN:
+                if (this->fun!= nullptr || other->fun!= nullptr) {
+                    return this->fun == other->fun;
+                } else {
+                    return this->formals->equal(other->formals)
+                           && this->body->equal(other->body);
+                }
+
+                /* If list compare every individual element */
+            case LVAL_QEXPR:
+            case LVAL_SEXPR:
+                if (this->count != other->count) { return false;  }
+                for (int i = 0; i < this->count; i++) {
+                    /* If any element not equal then whole list not equal */
+                    if (!this->cell[i]->equal(other->cell[i])) { return false; }
+                }
+                /* Otherwise lists must be equal */
+                return true;
+                break;
+            case LVAL_NONE:
+                return true;
+                break;
+        }
+
+        return false;
+    }
+
+    //Not Clever but easy to read
+    Lval *Lval::Lval_bool(bool x) {
+        if(x==true){
+            return Lval_num(1);
+        }else{
+            return Lval_num(0);
+        }
+    }
 } // Lval

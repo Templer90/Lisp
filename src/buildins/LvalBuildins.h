@@ -14,6 +14,7 @@
 #include "buildins_List.h"
 #include "buildins_Misc.h"
 #include "Buildins_Function.h"
+#include "Buildins_Conditinals.h"
 
 namespace buildins {
     parser::Lval *builtin_eval(parser::ValueHolder *env, parser::Lval *a) {
@@ -47,8 +48,18 @@ namespace buildins {
 
         /* Variable Functions */
         lenv_add_builtin(env, "def", builtin_def);
-        lenv_add_builtin(env, "=",   builtin_put);
+        lenv_add_builtin(env, "=", builtin_put);
         lenv_add_builtin(env, "\\", builtin_lambda);
+
+        /* Comparison Functions */
+        lenv_add_builtin(env, "if", builtin_if);
+        lenv_add_builtin(env, "==", builtin_eq);
+        lenv_add_builtin(env, "!=", builtin_ne);
+        lenv_add_builtin(env, ">", builtin_gt);
+        lenv_add_builtin(env, "<", builtin_lt);
+        lenv_add_builtin(env, ">=", builtin_ge);
+        lenv_add_builtin(env, "<=", builtin_le);
+
     }
 }
 

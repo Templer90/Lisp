@@ -72,6 +72,8 @@ namespace parser {
 
         Lval *lval_join(Lval *x, Lval *y);
 
+        bool equal(Lval *other);
+
         Lval *call(parser::ValueHolder* e, Lval* a);
 
         std::string lval_expr_print(char open, char close);
@@ -85,6 +87,8 @@ namespace parser {
         static void lval_println(Lval *v);
 
         static Lval *Lval_num(long x);
+
+        static Lval *Lval_bool(bool x);
 
         static Lval *Lval_Error(std::string m);
 
