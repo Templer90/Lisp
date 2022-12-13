@@ -25,9 +25,26 @@ parser::Lval *lval_read_num(mpc_ast_t *t) {
     return errno != ERANGE ? parser::Lval::Numerical(x) : parser::Lval::Lval_Error("invalid number");
 }
 
+parser::Lval *lval_read_str(mpc_ast_t* t) {
+    /* Cut off the final quote character */
+    t->contents[strlen(t->contents)-1] = '\0';
+    /* Copy the string missing out the first quote character */
+    char* unescaped = static_cast<char *>(malloc(strlen(t->contents + 1) + 1));
+    strcpy(unescaped, t->contents+1);
+    /* Pass through the unescape function */
+    unescaped = static_cast<char *>(mpcf_unescape(unescaped));
+    /* Construct a new lval using the string */
+    parser::Lval* str = parser::Lval::String(unescaped);
+    /* Free the string and return */
+    free(unescaped);
+    return str;
+}
+
 parser::Lval *lval_read(mpc_ast_t *t) {
     if (strstr(t->tag, "number")) { return lval_read_num(t); }
+    if (strstr(t->tag, "string")) { return lval_read_str(t); }
     if (strstr(t->tag, "symbol")) { return parser::Lval::Symbol(t->contents); }
+
 
     parser::Lval *x = nullptr;
     if (strcmp(t->tag, ">") == 0) { x = parser::Lval::S_Expression(); }
@@ -79,6 +96,8 @@ int main() {
 
     mpc_parser_t *Number = mpc_new("number");
     mpc_parser_t *Symbol = mpc_new("symbol");
+    mpc_parser_t *String  = mpc_new("string");
+    mpc_parser_t *Comment = mpc_new("comment");
     mpc_parser_t *Sexpr = mpc_new("sexpr");
     mpc_parser_t *Qexpr = mpc_new("qexpr");
     mpc_parser_t *Expr = mpc_new("expr");
@@ -87,11 +106,13 @@ int main() {
     mpca_lang(MPCA_LANG_DEFAULT,
       "number : /-?[0-9]+/ ;                               "
       "symbol : /[a-zA-Z0-9_+\\-*\\/\\\\=<>!&]+/ ;         "
+      "string : /\"(\\\\.|[^\"])*\"/ ;                     "
+      "comment: /;[^\\r\\n]*/ ;                            "
       "sexpr  : '(' <expr>* ')' ;                          "
       "qexpr  : '{' <expr>* '}' ;                          "
-      "expr   : <number> | <symbol> | <sexpr> | <qexpr> ;  "
+      "expr   : <number> | <symbol> | <sexpr> | <qexpr> | <string> | <comment>;  "
       "lispy  : /^/ <expr>* /$/ ;                          "
-      ,Number, Symbol, Sexpr, Qexpr, Expr, Lispy);
+      ,  Number, Symbol, String, Comment, Sexpr, Qexpr, Expr, Lispy);
 
     puts("Lispy Version 0.0.0.0.2");
     puts("Press Ctrl+c to Exit\n");
@@ -119,7 +140,8 @@ int main() {
         }
     }
 
-    mpc_cleanup(6, Number, Symbol, Sexpr, Qexpr, Expr, Lispy);
+    mpc_cleanup(8,Number, Symbol, String, Comment,Sexpr,  Qexpr,  Expr,   Lispy);
+
     crossline_history_save("history.txt");
     return 0;
 }

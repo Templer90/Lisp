@@ -16,7 +16,14 @@ namespace parser {
     class ValueHolder;
 
     enum LvalTypes {
-        LVAL_NONE, LVAL_FUN, LVAL_ERR, LVAL_NUM, LVAL_SYM, LVAL_SEXPR, LVAL_QEXPR
+        LVAL_NONE,
+        LVAL_FUN,
+        LVAL_ERR,
+        LVAL_NUM,
+        LVAL_SYM,
+        LVAL_STR,
+        LVAL_SEXPR,
+        LVAL_QEXPR
     };
 
     class Lval;
@@ -33,6 +40,7 @@ namespace parser {
         long num{};
         std::string err{};
         std::string sym{};
+        std::string str{};
 
         //Function:
         lbuiltin fun;
@@ -87,6 +95,8 @@ namespace parser {
         static Lval *Numerical(long x);
 
         static Lval *Boolean(bool x);
+
+        static Lval *String(std::string x);
 
         static Lval *Lval_Error(std::string m);
 

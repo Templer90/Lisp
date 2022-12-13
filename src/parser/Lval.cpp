@@ -14,6 +14,7 @@ namespace parser {
             case LVAL_NUM:
             case LVAL_ERR:
             case LVAL_SYM:
+            case LVAL_STR:
                 break;
             case LVAL_FUN:
                 if (this->fun != nullptr) {
@@ -30,6 +31,7 @@ namespace parser {
                 }
                 this->cell.clear();
                 break;
+
         }
         //implied delete(this);
     }
@@ -74,15 +76,15 @@ namespace parser {
     }
 
     std::string Lval::expr_print(char open, char close) {
-        std::string str(1, open);
+        std::string ret(1, open);
         for (int i = 0; i < this->count; i++) {
-            str += this->cell[i]->print();
+            ret += this->cell[i]->print();
             if (i != (this->count - 1)) {
-                str += ' ';
+                ret += ' ';
             }
         }
-        str += close;
-        return str;
+        ret += close;
+        return ret;
     }
 
     std::string Lval::print() {
@@ -105,6 +107,10 @@ namespace parser {
                 }
             default:
                 return "Error in Printing?";
+            case LVAL_NONE:
+                return "NONE";
+            case LVAL_STR:
+                return "'"+this->str+"'";
         }
     }
 
@@ -196,6 +202,9 @@ namespace parser {
                 }
                 break;
             case LVAL_NONE:
+                break;
+            case LVAL_STR:
+                copy->str= std::string(this->str);
                 break;
         }
         return copy;
@@ -300,6 +309,21 @@ namespace parser {
         return v;
     }
 
+    //Not Clever but easy to read
+    Lval *Lval::Boolean(bool x) {
+        if (x == true) {
+            return Numerical(1);
+        } else {
+            return Numerical(0);
+        }
+    }
+
+    Lval *Lval::String(std::string x) {
+        Lval *v = new Lval(LVAL_STR);
+        v->str = std::move(x);
+        return v;
+    }
+
     bool Lval::equal(Lval *other) {
         /* Different Types are always unequal */
         if (this->type != other->type) { return false; }
@@ -336,20 +360,14 @@ namespace parser {
                 /* Otherwise lists must be equal */
                 return true;
                 break;
+            case LVAL_STR:
+                return this->str.compare(other->str);
+                break;
             case LVAL_NONE:
                 return true;
                 break;
         }
 
         return false;
-    }
-
-    //Not Clever but easy to read
-    Lval *Lval::Boolean(bool x) {
-        if (x == true) {
-            return Numerical(1);
-        } else {
-            return Numerical(0);
-        }
     }
 } // Lval
