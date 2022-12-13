@@ -4,7 +4,7 @@
 #include "src/environment/ValueHolder.h"
 #include "includes/mpc/mpc.h"
 #include "src/parser/Lval.h"
-#include "src/buildins/buildins.h"
+#include "src/buildins/LvalBuildins.h"
 
 
 static void completion_hook(char const *buf, crossline_completions_t *pCompletion) {

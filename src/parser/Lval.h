@@ -14,22 +14,31 @@
 
 namespace parser {
     class ValueHolder;
+
     enum LvalTypes {
-        LVAL_NONE,LVAL_FUN,LVAL_ERR, LVAL_NUM, LVAL_SYM, LVAL_SEXPR, LVAL_QEXPR
+        LVAL_NONE, LVAL_FUN, LVAL_ERR, LVAL_NUM, LVAL_SYM, LVAL_SEXPR, LVAL_QEXPR
     };
 
     class Lval;
-    typedef Lval*(*lbuiltin)(ValueHolder*, Lval*);
+
+    typedef Lval *(*lbuiltin)(ValueHolder *, Lval *);
 
     class Lval {
     private:
 
     public:
         LvalTypes type = LVAL_NONE;
+
+        //Atoms:
         long num{};
         std::string err{};
         std::string sym{};
+
+        //Function:
         lbuiltin fun;
+        ValueHolder *env;
+        Lval *formals;
+        Lval* body;
 
         //TODO: Replace with Queue
         int count{};
@@ -39,9 +48,10 @@ namespace parser {
             this->type = t;
             this->count = 0;
             this->cell.clear();
-            this->fun=[](ValueHolder*, Lval*){
-                return Lval_Error("first element is not a function");
-            };
+            this->fun = nullptr;
+            this->env = nullptr;
+            this->formals = nullptr;
+            this->body = nullptr;
         }
 
         ~Lval();
@@ -62,51 +72,31 @@ namespace parser {
 
         Lval *lval_join(Lval *x, Lval *y);
 
+        Lval *call(parser::ValueHolder* e, Lval* a);
+
         std::string lval_expr_print(char open, char close);
 
         std::string lval_print();
 
         void lval_println();
 
-        Lval* copy();
+        Lval *copy();
 
         static void lval_println(Lval *v);
 
-        static Lval *Lval_num(long x) {
-            Lval *v = new Lval(LVAL_NUM);
-            v->num = x;
-            return v;
-        }
+        static Lval *Lval_num(long x);
 
-        static Lval *Lval_Error(std::string m) {
-            Lval *v = new Lval(LVAL_ERR);
-            v->err = std::move(m);
-            return v;
-        }
+        static Lval *Lval_Error(std::string m);
 
-        static Lval *Lval_symbol(std::string s) {
-            Lval *v = new Lval(LVAL_SYM);
-            v->sym = std::string(std::move(s));
-            return v;
-        }
+        static Lval *Lval_symbol(std::string s);
 
-        static Lval *Lval_sexpr() {
-            Lval *v = new Lval(LVAL_SEXPR);
-            return v;
-        }
+        static Lval *Lval_sexpr();
 
-        static Lval *Lval_qexpr() {
-            Lval *v = new Lval(LVAL_QEXPR);
-            return v;
-        }
+        static Lval *Lval_qexpr();
 
-        static Lval *Lval_fun(std::string m, lbuiltin func) {
-            Lval *v = new Lval(LVAL_FUN);
-            v->sym = std::move(m);
-            v->fun = func;
-            return v;
-        }
+        static Lval *Lval_fun(std::string m, lbuiltin func);
 
+        static Lval *Lval_Lambda(parser::Lval *formals, parser::Lval *body);
     };
 } // Lval
 

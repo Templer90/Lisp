@@ -11,14 +11,25 @@
 
 namespace parser {
     class Lval;
+
     class ValueHolder {
     private:
-        std::map<std::string, parser::Lval* > map{};
+        std::string name = "Not Set";
+        std::map<std::string, parser::Lval *> map{};
     public:
+        ValueHolder *parent = nullptr;
         ~ValueHolder();
-        parser::Lval* get(parser::Lval *k);
-        void put (parser::Lval *v);
-        void put (const std::string& symbol,parser::Lval *v);
+
+        parser::Lval *get(parser::Lval *k);
+
+        void put(parser::Lval *v);
+
+        void put(const std::string &symbol, parser::Lval *v);
+
+        void putGlobally(parser::Lval *v);
+        void putGlobally(const std::string &symbol, parser::Lval *v);
+
+        ValueHolder *copy();
     };
 
 } // parser
