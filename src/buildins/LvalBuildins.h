@@ -23,13 +23,13 @@ namespace buildins {
         LASSERT(a, a->cell[0]->type == parser::LVAL_QEXPR,
                 "Function 'eval' passed incorrect type.");
 
-        parser::Lval *x = a->lval_take(0);
+        parser::Lval *x = a->take(0);
         x->type = parser::LVAL_SEXPR;
         return x->eval(env);
     }
 
     void lenv_add_builtin(parser::ValueHolder *env, std::string name, parser::lbuiltin func) {
-        env->put(parser::Lval::Lval_fun(std::move(name), func));
+        env->put(parser::Lval::Buildin(std::move(name), func));
     }
 
     void InitializeBuildins(parser::ValueHolder *env) {

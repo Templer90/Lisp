@@ -44,7 +44,7 @@ namespace buildins {
         }
 
         delete (a);
-        return parser::Lval::Lval_sexpr();
+        return parser::Lval::S_Expression();
     }
 
     parser::Lval* builtin_def(parser::ValueHolder *env, parser::Lval* a) {
@@ -68,11 +68,11 @@ namespace buildins {
         }
 */
         /* Pop first two arguments and pass them to lval_lambda */
-        parser::Lval* formals =a->lval_pop();
-        parser::Lval* body = a->lval_pop();
+        parser::Lval* formals = a->pop();
+        parser::Lval* body = a->pop();
         delete a;
 
-        return parser::Lval::Lval_Lambda(formals, body);
+        return parser::Lval::Lambda(formals, body);
     }
 }
 #endif //LISP_BUILDINS_FUNCTION_H

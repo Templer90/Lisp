@@ -22,17 +22,17 @@ static void completion_hook(char const *buf, crossline_completions_t *pCompletio
 parser::Lval *lval_read_num(mpc_ast_t *t) {
     errno = 0;
     long x = strtol(t->contents, nullptr, 10);
-    return errno != ERANGE ? parser::Lval::Lval_num(x) : parser::Lval::Lval_Error("invalid number");
+    return errno != ERANGE ? parser::Lval::Numerical(x) : parser::Lval::Lval_Error("invalid number");
 }
 
 parser::Lval *lval_read(mpc_ast_t *t) {
     if (strstr(t->tag, "number")) { return lval_read_num(t); }
-    if (strstr(t->tag, "symbol")) { return parser::Lval::Lval_symbol(t->contents); }
+    if (strstr(t->tag, "symbol")) { return parser::Lval::Symbol(t->contents); }
 
     parser::Lval *x = nullptr;
-    if (strcmp(t->tag, ">") == 0) { x = parser::Lval::Lval_sexpr(); }
-    if (strstr(t->tag, "sexpr")) { x = parser::Lval::Lval_sexpr(); }
-    if (strstr(t->tag, "qexpr")) { x = parser::Lval::Lval_qexpr(); }
+    if (strcmp(t->tag, ">") == 0) { x = parser::Lval::S_Expression(); }
+    if (strstr(t->tag, "sexpr")) { x = parser::Lval::S_Expression(); }
+    if (strstr(t->tag, "qexpr")) { x = parser::Lval::Q_Expression(); }
 
     for (int i = 0; i < t->children_num; i++) {
         if (strcmp(t->children[i]->contents, "(") == 0) { continue; }
@@ -40,7 +40,7 @@ parser::Lval *lval_read(mpc_ast_t *t) {
         if (strcmp(t->children[i]->contents, "}") == 0) { continue; }
         if (strcmp(t->children[i]->contents, "{") == 0) { continue; }
         if (strcmp(t->children[i]->tag, "regex") == 0) { continue; }
-        x->lval_add(lval_read(t->children[i]));
+        x->add(lval_read(t->children[i]));
     }
 
     return x;
@@ -59,8 +59,8 @@ void testing( const std::string& file,mpc_parser_t *Lispy, parser::ValueHolder *
         mpc_result_t r;
         if (mpc_parse("<stdin>", line.c_str(), Lispy, &r)) {
             parser::Lval *result = lval_read((mpc_ast_t *) r.output)->eval(env);
-            auto actual=result->lval_print();
-            if(expectedResult!=result->lval_print()){
+            auto actual= result->print();
+            if(expectedResult!= result->print()){
                 mpc_ast_print((mpc_ast_t *)r.output);
                 printf("'%s' is different '%s' <> '%s'",line.c_str(),actual.c_str(), expectedResult.c_str() );
                 puts("\n");
@@ -111,7 +111,7 @@ int main() {
             //mpc_ast_print((mpc_ast_t *)r.output);
 
             parser::Lval *result = lval_read((mpc_ast_t *) r.output)->eval(&env);
-            result->lval_println();
+            result->println();
             mpc_ast_delete((mpc_ast_t *) r.output);
         } else {
             mpc_err_print(r.error);

@@ -20,12 +20,12 @@ namespace buildins {
             }
         }
 
-        parser::Lval *x = a->lval_pop(0);
+        parser::Lval *x = a->pop(0);
         if ((op->compare("-") == 0) && (a->count == 0)) { x->num = -x->num; }
 
         while (a->count > 0) {
 
-            parser::Lval *y = a->lval_pop(0);
+            parser::Lval *y = a->pop(0);
 
             if (op->compare("+") == 0) { x->num += y->num; }
             if (op->compare("-") == 0) { x->num -= y->num; }

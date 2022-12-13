@@ -25,7 +25,7 @@ namespace buildins {
             r = (a->cell[0]->num <= a->cell[1]->num);
         }
         delete a;
-        return parser::Lval::Lval_num(r);
+        return parser::Lval::Numerical(r);
     }
 
     parser::Lval *builtin_cmp(parser::ValueHolder *e, parser::Lval *a, const std::string &op) {
@@ -37,7 +37,7 @@ namespace buildins {
             r = !a->cell[0]->equal(a->cell[1]);
         }
         delete (a);
-        return parser::Lval::Lval_bool(r);
+        return parser::Lval::Boolean(r);
     }
 
     parser::Lval *builtin_eq(parser::ValueHolder *e, parser::Lval *a) {
@@ -72,10 +72,10 @@ namespace buildins {
 
         if (a->cell[0]->num) {
             /* If condition is true evaluate first expression */
-            x = a->lval_pop(1)->eval(e);
+            x = a->pop(1)->eval(e);
         } else {
             /* Otherwise evaluate second expression */
-            x = a->lval_pop(2)->eval(e);
+            x = a->pop(2)->eval(e);
         }
 
         /* Delete argument list and return */

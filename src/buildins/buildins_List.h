@@ -24,9 +24,9 @@ namespace buildins {
         LASSERT(a, a->cell[0]->count != 0,
                 "Function 'head' passed {}.");
 
-        parser::Lval *v = a->lval_take(0);
+        parser::Lval *v = a->take(0);
         while (v->count > 1) {
-            delete (v->lval_pop(1));
+            delete (v->pop(1));
         }
 
         return v;
@@ -40,8 +40,8 @@ namespace buildins {
         LASSERT(a, a->cell[0]->count != 0,
                 "Function 'tail' passed {}.");
 
-        parser::Lval *v = a->lval_take(0);
-        parser::Lval *p = v->lval_pop(0);
+        parser::Lval *v = a->take(0);
+        parser::Lval *p = v->pop(0);
         delete (p);
         return v;
     }
@@ -52,10 +52,10 @@ namespace buildins {
                     "Function 'join' passed incorrect type.");
         }
 
-        parser::Lval *x = a->lval_pop(0);
+        parser::Lval *x = a->pop(0);
 
         while (a->count) {
-            x->lval_join(x, a->lval_pop(0));
+            x->join(x, a->pop(0));
         }
 
         delete a;

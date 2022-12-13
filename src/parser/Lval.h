@@ -25,7 +25,7 @@ namespace parser {
 
     class Lval {
     private:
-
+        std::string expr_print(char open, char close);
     public:
         LvalTypes type = LVAL_NONE;
 
@@ -60,47 +60,45 @@ namespace parser {
 
         Lval *eval_sexpr(ValueHolder *env);
 
-        void lval_add(Lval *x);
+        void add(Lval *x);
 
-        Lval *lval_pop(int i);
+        Lval *pop(int i);
 
-        Lval *lval_take(int i);
+        Lval *pop();
 
-        Lval *lval_pop();
+        Lval *take(int i);
 
-        Lval *lval_take();
+        Lval *take();
 
-        Lval *lval_join(Lval *x, Lval *y);
+        Lval *join(Lval *x, Lval *y);
 
         bool equal(Lval *other);
 
         Lval *call(parser::ValueHolder* e, Lval* a);
 
-        std::string lval_expr_print(char open, char close);
+        std::string print();
 
-        std::string lval_print();
-
-        void lval_println();
+        void println();
 
         Lval *copy();
 
-        static void lval_println(Lval *v);
+        static void println(Lval *v);
 
-        static Lval *Lval_num(long x);
+        static Lval *Numerical(long x);
 
-        static Lval *Lval_bool(bool x);
+        static Lval *Boolean(bool x);
 
         static Lval *Lval_Error(std::string m);
 
-        static Lval *Lval_symbol(std::string s);
+        static Lval *Symbol(std::string s);
 
-        static Lval *Lval_sexpr();
+        static Lval *S_Expression();
 
-        static Lval *Lval_qexpr();
+        static Lval *Q_Expression();
 
-        static Lval *Lval_fun(std::string m, lbuiltin func);
+        static Lval *Buildin(std::string m, lbuiltin func);
 
-        static Lval *Lval_Lambda(parser::Lval *formals, parser::Lval *body);
+        static Lval *Lambda(parser::Lval *formals, parser::Lval *body);
     };
 } // Lval
 

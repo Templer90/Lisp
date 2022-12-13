@@ -34,28 +34,28 @@ namespace parser {
         //implied delete(this);
     }
 
-    void Lval::lval_add(Lval *x) {
+    void Lval::add(Lval *x) {
         this->count++;
         this->cell.push_back(x);
     }
 
-    Lval *Lval::lval_pop() {
-        return this->lval_pop(0);
+    Lval *Lval::pop() {
+        return this->pop(0);
     }
 
-    Lval *Lval::lval_take() {
-        return this->lval_take(0);
+    Lval *Lval::take() {
+        return this->take(0);
     }
 
-    Lval *Lval::lval_pop(int i) {
+    Lval *Lval::pop(int i) {
         Lval *x = this->cell[i];
         this->cell.erase(this->cell.begin() + i);
         this->count--;
         return x;
     }
 
-    Lval *Lval::lval_take(int i) {
-        Lval *x = this->lval_pop(i);
+    Lval *Lval::take(int i) {
+        Lval *x = this->pop(i);
         for (int j = 0; j < this->count; j++) {
             delete (this->cell[j]);
         }
@@ -64,19 +64,19 @@ namespace parser {
         return x;
     }
 
-    Lval *Lval::lval_join(Lval *x, Lval *y) {
+    Lval *Lval::join(Lval *x, Lval *y) {
         while (y->count) {
-            x->lval_add(y->lval_pop());
+            x->add(y->pop());
         }
 
         delete (y);
         return x;
     }
 
-    std::string Lval::lval_expr_print(char open, char close) {
+    std::string Lval::expr_print(char open, char close) {
         std::string str(1, open);
         for (int i = 0; i < this->count; i++) {
-            str += this->cell[i]->lval_print();
+            str += this->cell[i]->print();
             if (i != (this->count - 1)) {
                 str += ' ';
             }
@@ -85,7 +85,7 @@ namespace parser {
         return str;
     }
 
-    std::string Lval::lval_print() {
+    std::string Lval::print() {
         switch (this->type) {
             case LVAL_NUM:
                 return std::to_string(this->num);
@@ -94,28 +94,28 @@ namespace parser {
             case LVAL_SYM:
                 return this->sym;
             case LVAL_SEXPR:
-                return this->lval_expr_print('(', ')');
+                return this->expr_print('(', ')');
             case LVAL_QEXPR:
-                return this->lval_expr_print('{', '}');
+                return this->expr_print('{', '}');
             case LVAL_FUN:
                 if (this->fun != nullptr) {
                     return "<builtin>";
                 } else {
-                    return "(\\ " + this->formals->lval_print() + " " + this->body->lval_print() + ")";
+                    return "(\\ " + this->formals->print() + " " + this->body->print() + ")";
                 }
             default:
                 return "Error in Printing?";
         }
     }
 
-    void Lval::lval_println(Lval *v) {
-        auto s = v->lval_print();
+    void Lval::println(Lval *v) {
+        auto s = v->print();
         puts(s.c_str());
         putchar('\n');
     }
 
-    void Lval::lval_println() {
-        Lval::lval_println(this);
+    void Lval::println() {
+        Lval::println(this);
     }
 
     Lval *Lval::eval(ValueHolder *env) {
@@ -139,15 +139,15 @@ namespace parser {
         }
 
         for (int i = 0; i < list.size(); i++) {
-            if (list[i]->type == LVAL_ERR) { return this->lval_take(i); }
+            if (list[i]->type == LVAL_ERR) { return this->take(i); }
             if (list[i]->type == LVAL_NONE) { return Lval_Error("NONE Type Generated"); }
         }
 
         this->cell = list;
         if (this->count == 0) { return this; }
-        if (this->count == 1) { return this->lval_take(); }
+        if (this->count == 1) { return this->take(); }
 
-        Lval *f = this->lval_pop();
+        Lval *f = this->pop();
         if (f->type != LVAL_FUN) {
             delete (this);
             delete (f);
@@ -201,14 +201,14 @@ namespace parser {
         return copy;
     }
 
-    Lval* Lval::call(parser::ValueHolder* e, Lval* a) {
+    Lval *Lval::call(parser::ValueHolder *e, Lval *a) {
         /* If Builtin then simply apply that */
         if (this->fun != nullptr) { return this->fun(e, a); }
 
         /* Record Argument Counts */
         int given = a->count;
         if (this->formals == nullptr) {
-            delete(a);
+            delete (a);
             return parser::Lval::Lval_Error("No Formals found ");
         }
         int total = this->formals->count;
@@ -219,26 +219,26 @@ namespace parser {
 
             /* If we've ran out of formal arguments to bind */
             if (this->formals->count == 0) {
-                delete(a);
+                delete (a);
                 return parser::Lval::Lval_Error("Function passed too many arguments. ");
             }
 
             /* Pop the first symbol from the formals */
-            Lval* symbol = this->formals->lval_pop();
+            Lval *symbol = this->formals->pop();
 
             /* Pop the next argument from the list */
-            Lval* val = a->lval_pop();
+            Lval *val = a->pop();
 
             /* Bind a copy into the function's environment */
             this->env->put(symbol->sym, val);
 
             /* Delete symbol and value */
-            delete(symbol);
-            delete(val);
+            delete (symbol);
+            delete (val);
         }
 
         /* Argument list is now bound so can be cleaned up */
-        delete(a);
+        delete (a);
 
         /* If all formals have been bound evaluate */
         if (this->formals->count == 0) {
@@ -246,8 +246,8 @@ namespace parser {
             /* Set environment parent to evaluation environment */
             this->env->parent = e;
 
-            Lval* newexp=parser::Lval::Lval_sexpr();
-            newexp->lval_add(this->body->copy());
+            Lval *newexp = parser::Lval::S_Expression();
+            newexp->add(this->body->copy());
             /* Evaluate and return */
             return buildins::builtin_eval(this->env, newexp);
         } else {
@@ -256,7 +256,7 @@ namespace parser {
         }
     }
 
-    Lval *Lval::Lval_num(long x) {
+    Lval *Lval::Numerical(long x) {
         Lval *v = new Lval(LVAL_NUM);
         v->num = x;
         return v;
@@ -268,30 +268,30 @@ namespace parser {
         return v;
     }
 
-    Lval *Lval::Lval_symbol(std::string s) {
+    Lval *Lval::Symbol(std::string s) {
         Lval *v = new Lval(LVAL_SYM);
         v->sym = std::string(std::move(s));
         return v;
     }
 
-    Lval *Lval::Lval_sexpr() {
+    Lval *Lval::S_Expression() {
         Lval *v = new Lval(LVAL_SEXPR);
         return v;
     }
 
-    Lval *Lval::Lval_qexpr() {
+    Lval *Lval::Q_Expression() {
         Lval *v = new Lval(LVAL_QEXPR);
         return v;
     }
 
-    Lval *Lval::Lval_fun(std::string m, lbuiltin func) {
+    Lval *Lval::Buildin(std::string m, lbuiltin func) {
         Lval *v = new Lval(LVAL_FUN);
         v->sym = std::move(m);
         v->fun = func;
         return v;
     }
 
-    Lval *Lval::Lval_Lambda(Lval *formals, Lval *body) {
+    Lval *Lval::Lambda(Lval *formals, Lval *body) {
         Lval *v = new Lval(LVAL_FUN);
         v->fun = nullptr;
         v->env = new ValueHolder();
@@ -307,15 +307,18 @@ namespace parser {
         /* Compare Based upon type */
         switch (this->type) {
             /* Compare Number Value */
-            case LVAL_NUM: return (this->num == other->num);
+            case LVAL_NUM:
+                return (this->num == other->num);
 
                 /* Compare String Values */
-            case LVAL_ERR: return this->err.compare(other->err)==0;
-            case LVAL_SYM: return this->sym.compare(other->sym)==0;
+            case LVAL_ERR:
+                return this->err.compare(other->err) == 0;
+            case LVAL_SYM:
+                return this->sym.compare(other->sym) == 0;
 
                 /* If builtin compare, otherwise compare formals and body */
             case LVAL_FUN:
-                if (this->fun!= nullptr || other->fun!= nullptr) {
+                if (this->fun != nullptr || other->fun != nullptr) {
                     return this->fun == other->fun;
                 } else {
                     return this->formals->equal(other->formals)
@@ -325,7 +328,7 @@ namespace parser {
                 /* If list compare every individual element */
             case LVAL_QEXPR:
             case LVAL_SEXPR:
-                if (this->count != other->count) { return false;  }
+                if (this->count != other->count) { return false; }
                 for (int i = 0; i < this->count; i++) {
                     /* If any element not equal then whole list not equal */
                     if (!this->cell[i]->equal(other->cell[i])) { return false; }
@@ -342,11 +345,11 @@ namespace parser {
     }
 
     //Not Clever but easy to read
-    Lval *Lval::Lval_bool(bool x) {
-        if(x==true){
-            return Lval_num(1);
-        }else{
-            return Lval_num(0);
+    Lval *Lval::Boolean(bool x) {
+        if (x == true) {
+            return Numerical(1);
+        } else {
+            return Numerical(0);
         }
     }
 } // Lval
