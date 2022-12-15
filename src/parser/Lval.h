@@ -64,9 +64,9 @@ namespace parser {
 
         ~Lval();
 
-        Lval *eval(ValueHolder *env);
+        Lval *eval(ValueHolder *enviro);
 
-        Lval *eval_sexpr(ValueHolder *env);
+        Lval *eval_sexpr(ValueHolder *enviro);
 
         void add(Lval *x);
 

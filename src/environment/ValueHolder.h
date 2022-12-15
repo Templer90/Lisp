@@ -8,6 +8,7 @@
 #include <map>
 #include <string>
 #include "../parser/Lval.h"
+#include "../../includes/mpc/mpc.h"
 
 namespace parser {
     class Lval;
@@ -15,9 +16,12 @@ namespace parser {
     class ValueHolder {
     private:
         std::string name = "Not Set";
-        std::map<std::string, parser::Lval *> map{};
     public:
+        std::map<std::string, parser::Lval *> map{};
         ValueHolder *parent = nullptr;
+        mpc_parser_t *Lispy= nullptr;
+
+
         ~ValueHolder();
 
         parser::Lval *get(parser::Lval *k);

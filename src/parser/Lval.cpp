@@ -124,24 +124,24 @@ namespace parser {
         Lval::println(this);
     }
 
-    Lval *Lval::eval(ValueHolder *env) {
+    Lval *Lval::eval(ValueHolder *enviro) {
         if (this->type == LVAL_SYM) {
-            Lval *x = env->get(this);
+            Lval *x = enviro->get(this);
             delete this;
             return x;
         }
 
         if (this->type == LVAL_SEXPR) {
-            return this->eval_sexpr(env);
+            return this->eval_sexpr(enviro);
         }
         return this;
     }
 
-    Lval *Lval::eval_sexpr(ValueHolder *env) {
+    Lval *Lval::eval_sexpr(ValueHolder *enviro) {
         std::vector<Lval *> list;
         list.reserve(this->count);
         for (int i = 0; i < this->count; i++) {
-            list.push_back(this->cell[i]->eval(env));
+            list.push_back(this->cell[i]->eval(enviro));
         }
 
         for (int i = 0; i < list.size(); i++) {
@@ -160,7 +160,7 @@ namespace parser {
             return Lval_Error("first element is not a function");
         }
 
-        Lval *result = f->call(env, this);
+        Lval *result = f->call(enviro, this);
         delete (f);
         return result;
     }

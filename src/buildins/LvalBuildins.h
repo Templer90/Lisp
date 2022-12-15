@@ -13,8 +13,10 @@
 #include "buildins_Math.h"
 #include "buildins_List.h"
 #include "buildins_Misc.h"
-#include "Buildins_Function.h"
-#include "Buildins_Conditinals.h"
+#include "buildins_Function.h"
+#include "buildins_Conditinals.h"
+#include "buildins_File.h"
+#include "buildins_Internals.h"
 
 namespace buildins {
     parser::Lval *builtin_eval(parser::ValueHolder *env, parser::Lval *a) {
@@ -32,7 +34,7 @@ namespace buildins {
         env->put(parser::Lval::Buildin(std::move(name), func));
     }
 
-    void InitializeBuildins(parser::ValueHolder *env) {
+    void InitializeBuildins(parser::ValueHolder *env, mpc_parser_t *lispy) {
         /* List Functions */
         lenv_add_builtin(env, "list", builtin_list);
         lenv_add_builtin(env, "head", builtin_head);
@@ -60,6 +62,13 @@ namespace buildins {
         lenv_add_builtin(env, ">=", builtin_ge);
         lenv_add_builtin(env, "<=", builtin_le);
 
+        /* Loading */
+        lenv_add_builtin(env, "load",  builtin_load);
+        lenv_add_builtin(env, "error", builtin_error);
+        lenv_add_builtin(env, "print", builtin_print);
+
+        /* Internals */
+        lenv_add_builtin(env, "env",  builtin_env);
     }
 }
 

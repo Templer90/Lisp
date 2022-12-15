@@ -47,7 +47,8 @@ namespace parser {
 
 
     ValueHolder *ValueHolder::copy() {
-        auto *copy = new ValueHolder();
+        auto copy = new ValueHolder();
+        copy->Lispy=this->Lispy;
         if (this->parent != nullptr) {
             copy->parent = this->parent;
         } else {
